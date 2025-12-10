@@ -16,11 +16,15 @@ def evaluate_model(y_true: pd.Series, y_pred: pd.Series) -> dict:
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     mae = mean_absolute_error(y_true, y_pred)
     
-    # Avoid division by zero for MAPE
-    with np.errstate(divide='ignore', invalid='ignore'):
-        mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-        if np.isinf(mape) or np.isnan(mape):
-            mape = np.nan
+    # Avoid division by zero for MAPE by filtering out zero values
+    non_zero_mask = y_true != 0
+    y_true_filtered = y_true[non_zero_mask]
+    y_pred_filtered = y_pred[non_zero_mask]
+
+    if len(y_true_filtered) == 0:
+        mape = np.nan  # Return NaN if all true values are zero
+    else:
+        mape = np.mean(np.abs((y_true_filtered - y_pred_filtered) / y_true_filtered)) * 100
 
     return {
         "RMSE": rmse,
