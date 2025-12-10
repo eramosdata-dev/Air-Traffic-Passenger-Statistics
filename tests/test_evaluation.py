@@ -26,9 +26,27 @@ def test_evaluate_model():
     # MAPE: (10/100 + 10/200 + 0/300) / 3 * 100 = (0.1 + 0.05) / 3 * 100 = 5%
     assert np.isclose(metrics["MAPE"], 5.0)
 
-def test_evaluate_model_zero_division():
-    y_true = pd.Series([0, 100])
-    y_pred = pd.Series([10, 110])
+def test_evaluate_model_with_zero_in_true_values():
+    """
+    Test that MAPE is calculated correctly when y_true contains zeros.
+    The zero values should be ignored.
+    """
+    y_true = pd.Series([0, 100, 200])
+    y_pred = pd.Series([10, 110, 220])
+
+    metrics = evaluate_model(y_true, y_pred)
+
+    # MAPE should be calculated only on non-zero values:
+    # MAPE = mean(|(100-110)/100|, |(200-220)/200|) * 100
+    #      = mean(0.1, 0.1) * 100 = 10%
+    assert np.isclose(metrics["MAPE"], 10.0)
+
+def test_evaluate_model_with_all_zeros_in_true_values():
+    """
+    Test that MAPE is NaN when all y_true values are zero.
+    """
+    y_true = pd.Series([0, 0, 0])
+    y_pred = pd.Series([10, 20, 30])
     
     metrics = evaluate_model(y_true, y_pred)
     
